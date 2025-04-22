@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shroomlet 紙菇菇</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #renderCanvas {
+      width: 100%;
+      height: 400px;
+      display: block;
+      background: #ffffff;
+    }
+    #renderCanvas:focus {
+  outline: none;
+}
+
+    .model-container {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo">
+    </a>
+    <div class="menu-icon">&#9776;</div>
+  </header>
+
+  <div class="dropdown-menu" id="dropdownMenu">
+    <a href="about.html">About Us</a>
+    <a href="index.html">怪獸</a>
+  </div>
+
+  <main>
+    <!-- ✅ 替代原本圖片的模型展示區 -->
+    <div class="model-container">
+      <canvas id="renderCanvas"></canvas>
+    </div>
+
+    <h1>Shroomlet</h1>
+    <h2>紙菇菇</h2>
+
+    <div class="categories">
+      <button><img src="paper.png" alt="" class="icon"> 紙類</button>
+      <button><img src="plastic-bin.png" alt="" class="icon"> 塑膠類</button>
+    </div>
+
+    <nav class="tabs">
+      <span class="tab active" data-tab="about">關於</span>
+      <span class="tab" data-tab="skill">技能</span>
+      <span class="tab" data-tab="knowledge">知識</span>
+    </nav>
+
+    <section class="content">
+      <div id="about" class="tab-content active">
+        <p>回收場上的亂入小蘑菇</p>
+        <p>紙菇菇是一隻由紙和塑膠融合而成的小怪獸，<br>
+          外層柔軟的紙質和內部塑膠的紋理讓牠看起來既輕盈又堅硬，<br>
+          讓培育員難以分辨。</p>
+      </div>
+
+      <div id="skill" class="tab-content">
+        <div class="skill-button">
+          <span>📦 纖補塔選陣</span>
+        </div>
+        <p>回收紙的纖維，每轉一次就短一截<br>
+          為了讓它繼續戰鬥，必須加入新紙漿來補料<br>
+          這是紙系魔法的補強之術，維持品質靠新舊平衡。<br>
+          塑膠系則更複雜，材質各異。</p>
+      </div>
+
+      <div id="knowledge" class="tab-content">
+        <div class="video-wrapper">
+          <video src="trash.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+
+  <!-- ✅ Babylon.js & glTF loader -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+  <script>
+    const canvas = document.getElementById("renderCanvas");
+    const engine = new BABYLON.Engine(canvas, true);
+    engine.displayLoadingUI = function () {};
+engine.hideLoadingUI = function () {};
+    const createScene = function () {
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+      const fixedBeta = Math.PI / 2.2; // 可微調成你喜歡的角度
+
+const camera = new BABYLON.ArcRotateCamera(
+  "camera",
+  Math.PI / 350,      // alpha：繞 Y 軸角度，允許旋轉
+  fixedBeta,        // beta：繞 X 軸角度，固定住
+  210,
+  new BABYLON.Vector3(0, 70, 0),
+
+  scene
+);
+
+camera.lowerBetaLimit = fixedBeta;
+camera.upperBetaLimit = fixedBeta;
+
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = camera.upperRadiusLimit = camera.radius; // ✅ 鎖定縮放距離
+  
+      const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+  
+      BABYLON.SceneLoader.Append("./model/", "paperplastic.glb", scene, function (scene) {
+  const model = scene.meshes[0];
+  model.scaling = new BABYLON.Vector3(30, 30, 30);
+  model.rotate(BABYLON.Axis.Y, Math.PI / -2, BABYLON.Space.WORLD);
+  console.log("模型載入成功！");
+
+  // ✅ 強制所有材質變為不透明 & alpha 設定
+  scene.meshes.forEach(mesh => {
+    if (mesh.material && mesh.material instanceof BABYLON.PBRMaterial) {
+      mesh.material.transparencyMode = BABYLON.PBRMaterial.PBRMATERIAL_OPAQUE;
+      mesh.material.alpha = 1.0;
+      mesh.material.needDepthPrePass = true; // 可選，處理透明遮擋問題
+    }
+  });
+});
+  
+      return scene;
+    };
+  
+    const scene = createScene();
+  
+    engine.runRenderLoop(function () {
+      scene.render();
+    });
+  
+    window.addEventListener("resize", function () {
+      engine.resize();
+    });
+  </script>
+  
+</body>
+</html>
